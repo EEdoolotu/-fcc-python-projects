@@ -1,0 +1,42 @@
+def arithmetic_arranger(problems, show_answers=False):
+    if len(problems) > 5:
+        return "Error: Too many problems."
+
+    tops = []
+    bottoms = []
+    lines = []
+    answers = []
+
+    for problem in problems:
+        left, operator, right = problem.split()
+
+        # Validation
+        if operator not in ['+', '-']:
+            return "Error: Operator must be '+' or '-'."
+        if not left.isdigit() or not right.isdigit():
+            return "Error: Numbers must only contain digits."
+        if len(left) > 4 or len(right) > 4:
+            return "Error: Numbers cannot be more than four digits."
+
+        # Calculate width for alignment
+        width = max(len(left), len(right)) + 2
+        top = left.rjust(width)
+        bottom = operator + right.rjust(width - 1)
+        line = '-' * width
+
+        tops.append(top)
+        bottoms.append(bottom)
+        lines.append(line)
+
+        if show_answers:
+            result = str(eval(problem))
+            answers.append(result.rjust(width))
+
+    # Join all problems side by side with 4 spaces
+    arranged_problems = '    '.join(tops) + '\n' + '    '.join(bottoms) + '\n' + '    '.join(lines)
+    if show_answers:
+        arranged_problems += '\n' + '    '.join(answers)
+
+    return arranged_problems
+
+print(arithmetic_arranger(["32 + 698", "3801 - 2", "45 + 43", "123 + 49"]))
