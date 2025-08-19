@@ -1,0 +1,86 @@
+class Category:
+    def __init__(self, name):
+        self.name = name
+        self.ledger = []
+
+    def deposit(self, amount, description=""):
+        self.ledger.append({"amount": amount, "description": description})
+
+    def get_balance(self):
+        return sum(entry["amount"] for entry in self.ledger)
+
+    def check_funds(self, amount):
+        return amount <= self.get_balance()
+
+    def withdraw(self, amount, description=""):
+        if not self.check_funds(amount):
+            return False
+        self.ledger.append({"amount": -amount, "description": description})
+        return True
+
+    def transfer(self, amount, other_category):
+        if not self.check_funds(amount):
+            return False
+        # record in both ledgers with required descriptions
+        self.withdraw(amount, f"Transfer to {other_category.name}")
+        other_category.deposit(amount, f"Transfer from {self.name}")
+        return True
+
+    def __str__(self):
+        # Title line (exactly 30 chars, centered with '*')
+        lines = [self.name.center(30, "*")]
+
+        # Ledger lines
+        for entry in self.ledger:
+            desc = entry["description"][:23]
+            amt_str = f"{entry['amount']:.2f}"   # two decimals
+            amt_str = amt_str[:7]                # max 7 characters
+            line = desc.ljust(23) + amt_str.rjust(7)  # 23 + 7 = 30
+            lines.append(line)
+
+        # Total line
+        total_line = f"Total: {self.get_balance():.2f}"
+        lines.append(total_line)
+
+        return "\n".join(lines)
+
+
+def create_spend_chart(categories):
+    # 1) Spending per category (withdrawals only, as positives)
+    spent_per_cat = []
+    for cat in categories:
+        spent = sum(-e["amount"] for e in cat.ledger if e["amount"] < 0)
+        spent_per_cat.append(spent)
+
+    total_spent = sum(spent_per_cat) or 0
+
+    # 2) Percentages floored to tens (0..100)
+    perc = []
+    for s in spent_per_cat:
+        pct = 0 if total_spent == 0 else int((s / total_spent) * 100)
+        pct = pct - (pct % 10)  # floor to nearest 10
+        perc.append(pct)
+
+    # 3) Build the chart lines (bars 100→0)
+    lines = ["Percentage spent by category"]
+    for level in range(100, -1, -10):
+        row = f"{level:>3}| "
+        for p in perc:
+            row += "o  " if p >= level else "   "
+        lines.append(row)  # ends with two spaces after final bar
+
+    # 4) Separator line: 4 spaces + (3*n + 1) dashes
+    lines.append("    " + "-" * (3 * len(categories) + 1))
+
+    # 5) Category names printed vertically (two spaces after final category)
+    names = [c.name for c in categories]
+    maxlen = max((len(n) for n in names), default=0)
+    for i in range(maxlen):
+        row = "     "
+        for n in names:
+            ch = n[i] if i < len(n) else " "
+            row += ch + "  "
+        lines.append(row)  # keep trailing spaces to match exact width
+
+    # 6) Return without trailing newline
+    return "\n".join(lines)
