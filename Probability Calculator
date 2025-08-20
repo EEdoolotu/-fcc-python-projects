@@ -1,0 +1,39 @@
+import random
+from collections import Counter
+
+class Hat:
+    def __init__(self, **balls):
+        self.contents = []
+        for color, count in balls.items():
+            self.contents.extend([color] * count)
+
+    def draw(self, num_balls):
+        # Return all balls if drawing at least as many as available
+        if num_balls >= len(self.contents):
+            drawn = self.contents[:]      # copy
+            self.contents.clear()
+            return drawn
+
+        # Sample unique indices, then pop in reverse order (no replacement)
+        indices = random.sample(range(len(self.contents)), num_balls)
+        drawn = [self.contents[i] for i in indices]
+        for i in sorted(indices, reverse=True):
+            self.contents.pop(i)
+        return drawn
+
+
+def experiment(hat, expected_balls, num_balls_drawn, num_experiments):
+    successes = 0
+    expected = Counter(expected_balls)
+
+    for _ in range(num_experiments):
+        # Fresh hat each trial, rebuilt from color counts
+        hat_copy = Hat(**Counter(hat.contents))
+        drawn = hat_copy.draw(num_balls_drawn)
+        got = Counter(drawn)
+
+        # “At least” the expected counts
+        if all(got.get(color, 0) >= count for color, count in expected.items()):
+            successes += 1
+
+    return successes / num_experiments
